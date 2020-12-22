@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Models;
+
+use App\Enum\Access;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use GeneaLabs\LaravelModelCaching\Traits\Cachable;
+
+class User extends Authenticatable //implements MustVerifyEmail
+{
+    use Notifiable;
+    use Cachable;
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name', 'email', 'password'
+    ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    public function role()
+    {
+        return $this->hasOne('App\Models\Role','id','role_id');
+    }
+
+    public function isSuperadmin() 
+    {
+        return ($this->id == Access::SUPERADMIN) ? true : false;
+    }
+
+    public function hasPermission($permission)
+    {
+        if ($this->role->permissions->where('name', $permission)->first()) {
+            return true;
+        }
+        return false;
+    }
+
+    public function token()
+    {
+        return $this->hasOne('App\Models\ActivationUser');
+    }
+
+    public function profile()
+    {
+        return $this->hasOne('App\Models\Profil');
+    }
+}
